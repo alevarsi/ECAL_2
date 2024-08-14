@@ -85,7 +85,9 @@ process.RECOoutput = cms.OutputModule("PoolOutputModule",
     outputCommands= cms.untracked.vstring("drop *",
                                           'keep *_ecal*_*_*',
                                           "drop *_ecalDigis_*_*",
-                                          "drop *_ecalPreshowerDigis_*_*"),
+                                          "drop *_ecalPreshowerDigis_*_*",
+                                          "drop reco*_*_*_*",
+                                          "drop EcalTrig*_*_*_*"),
 
     #outputCommands = process.RECOEventContent.outputCommands,    splitLevel = cms.untracked.int32(0)
 )
@@ -104,6 +106,11 @@ process.GEMGeometryESModule = cms.ESProducer("GEMGeometryESModule",
     fromDDD = cms.bool(False)
 )
 
+# DumpLaserCorrection
+process.dumpLaserCorrections = cms.EDAnalyzer('DumpEcalLaserCorrections')
+process.dumpLaserCorrections_step = cms.Path(process.dumpLaserCorrections)
+
+
 # Path and EndPath definitions
 process.raw2digi_step = cms.Path(process.RawToDigi)
 process.L1Reco_step = cms.Path(process.L1Reco)
@@ -115,6 +122,7 @@ process.RECOoutput_step = cms.EndPath(process.RECOoutput)
 process.schedule = cms.Schedule(process.raw2digi_step,
                                 process.L1Reco_step,
                                 process.reconstruction_step,
+                                process.dumpLaserCorrections_step,
                                 process.endjob_step,
                                 process.RECOoutput_step)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
