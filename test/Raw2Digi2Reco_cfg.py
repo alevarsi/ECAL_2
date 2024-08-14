@@ -106,9 +106,12 @@ process.GEMGeometryESModule = cms.ESProducer("GEMGeometryESModule",
     fromDDD = cms.bool(False)
 )
 
-# DumpLaserCorrection
-process.dumpLaserCorrections = cms.EDAnalyzer('DumpEcalLaserCorrections')
-process.dumpLaserCorrections_step = cms.Path(process.dumpLaserCorrections)
+# DumpEcalLaserCorrection
+process.dumpEcalLaserCorrections = cms.EDAnalyzer('DumpEcalLaserCorrections',
+    eeRecHits = cms.InputTag('ecalRecHit', 'EcalRecHitsEE')
+)
+
+process.dumpEcalLaserCorrections_step = cms.Path(process.dumpEcalLaserCorrections)
 
 
 # Path and EndPath definitions
@@ -122,7 +125,7 @@ process.RECOoutput_step = cms.EndPath(process.RECOoutput)
 process.schedule = cms.Schedule(process.raw2digi_step,
                                 process.L1Reco_step,
                                 process.reconstruction_step,
-                                process.dumpLaserCorrections_step,
+                                process.dumpEcalLaserCorrections_step,
                                 process.endjob_step,
                                 process.RECOoutput_step)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
