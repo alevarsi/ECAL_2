@@ -1,45 +1,52 @@
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/one/EDAnalyzer.h"
-#include "FWCore/Framework/interface/Event.h"
+/*#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "FWCore/Utilities/interface/ESGetToken.h"
-
-#include "CondFormats/DataRecord/interface/EcalLaserDbRecord.h"
-#include "CondFormats/EcalObjects/interface/EcalLaserDbService.h"
+#include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatios.h"
+#include "CondFormats/DataRecord/interface/EcalLaserAPDPNRatiosRcd.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "DataFormats/EcalDetId/interface/EEDetId.h"
+#include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 
 class DumpEcalLaserCorrections : public edm::one::EDAnalyzer<> {
 public:
   explicit DumpEcalLaserCorrections(const edm::ParameterSet&);
-  ~DumpEcalLaserCorrections();
+  ~DumpEcalLaserCorrections() override = default;
 
-  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+  void analyze(const edm::Event&, const edm::EventSetup&) override;
 
 private:
-  virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-
-  edm::ESGetToken<EcalLaserDbService, EcalLaserDbRecord> laserToken_;
+  edm::EDGetTokenT<EcalRecHitCollection> eeRecHitToken_;
 };
 
 DumpEcalLaserCorrections::DumpEcalLaserCorrections(const edm::ParameterSet& iConfig)
-    : laserToken_(esConsumes<EcalLaserDbService, EcalLaserDbRecord>()) {}
-
-DumpEcalLaserCorrections::~DumpEcalLaserCorrections() {}
+  : eeRecHitToken_(consumes<EcalRecHitCollection>(iConfig.getParameter<edm::InputTag>("eeRecHits"))) {
+}
 
 void DumpEcalLaserCorrections::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  const auto& laserService = iSetup.getData(laserToken_);
+  edm::Handle<EcalRecHitCollection> eeRecHits;
+  iEvent.getByToken(eeRecHitToken_, eeRecHits);
 
-  for (int i = 1; i <= 75848; ++i) {  // Numero totale di cristalli in EB e EE
-    float laserCorrection = laserService.getLaserCorrection(i);
-    edm::LogInfo("DumpEcalLaserCorrections") << "Crystal " << i << ": Laser Correction = " << laserCorrection;
+  edm::ESHandle<EcalLaserAPDPNRatios> laserRatios;
+  iSetup.get<EcalLaserAPDPNRatiosRcd>().get(laserRatios);
+
+  const auto& ratiosMap = laserRatios->getLaserRatiosMap();
+
+  for (const auto& hit : *eeRecHits) {
+    EEDetId detId = hit.detid();
+
+    auto it = ratiosMap.find(detId);
+    if (it != ratiosMap.end()) {
+      edm::LogInfo("DumpEcalLaserCorrections")
+        << "Laser APD/Pn ratio for crystal " << detId.rawId()
+        << " in EE: " << it->second;
+    } else {
+      edm::LogWarning("DumpEcalLaserCorrections")
+        << "No laser APD/Pn ratio found for crystal " << detId.rawId() << " in EE.";
+    }
   }
 }
 
-void DumpEcalLaserCorrections::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-  edm::ParameterSetDescription desc;
-  descriptions.add("dumpEcalLaserCorrections", desc);
-}
-
-// Definisce il modulo come un plugin
 DEFINE_FWK_MODULE(DumpEcalLaserCorrections);
+*/
